@@ -21,7 +21,7 @@
 ## Fase 4: Gerenciamento de Campanhas
 - [x] Criar página de lista de campanhas
 - [x] Implementar tabela com colunas: nome, status, data de envio, ações
-- [ ] Adicionar funcionalidade de agendamento de envio
+- [x] Adicionar funcionalidade de agendamento de envio
 - [x] Implementar filtros por status
 
 ## Fase 5: Gerenciamento de Assinantes e Segmentos

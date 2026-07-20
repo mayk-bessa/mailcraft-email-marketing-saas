@@ -155,7 +155,11 @@ export default function Campaigns() {
                           {campaign.clickRate}%
                         </td>
                         <td className="py-3 px-4 text-muted-foreground text-sm">
-                          {campaign.createdAt
+                          {campaign.status === "sent" && campaign.sentAt
+                            ? new Date(campaign.sentAt).toLocaleDateString("pt-BR")
+                            : campaign.status === "scheduled" && campaign.scheduledAt
+                            ? new Date(campaign.scheduledAt).toLocaleDateString("pt-BR")
+                            : campaign.createdAt
                             ? new Date(campaign.createdAt).toLocaleDateString("pt-BR")
                             : "-"}
                         </td>

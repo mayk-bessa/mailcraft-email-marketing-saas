@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
-import { getCampaignsByUserId, createCampaign, getSubscribersByUserId, createSubscriber, getSegmentsByUserId, createSegment, getPrebuiltTemplates, createEmailTemplate } from "./db";
+import { getCampaignsByUserId, createCampaign, getSubscribersByUserId, createSubscriber, getSegmentsByUserId, createSegment, getPrebuiltTemplates, createEmailTemplate, getCampaignById, updateCampaign } from "./db";
 
 export const appRouter = router({
   system: systemRouter,
@@ -51,6 +51,35 @@ export const appRouter = router({
           subject: input.subject,
           emailContent: input.emailContent,
           status: "draft",
+        });
+      }),
+    schedule: protectedProcedure
+      .input(z.object({
+        campaignId: z.number(),
+        scheduledAt: z.date(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const campaign = await getCampaignById(input.campaignId);
+        if (!campaign || campaign.userId !== ctx.user.id) {
+          throw new Error("Campaign not found or unauthorized");
+        }
+        return updateCampaign(input.campaignId, {
+          status: "scheduled",
+          scheduledAt: input.scheduledAt,
+        });
+      }),
+    send: protectedProcedure
+      .input(z.object({
+        campaignId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const campaign = await getCampaignById(input.campaignId);
+        if (!campaign || campaign.userId !== ctx.user.id) {
+          throw new Error("Campaign not found or unauthorized");
+        }
+        return updateCampaign(input.campaignId, {
+          status: "sent",
+          sentAt: new Date(),
         });
       }),
   }),

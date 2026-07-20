@@ -96,10 +96,23 @@ export async function getCampaignsByUserId(userId: number) {
   return db.select().from(campaigns).where(eq(campaigns.userId, userId));
 }
 
+export async function getCampaignById(campaignId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(campaigns).where(eq(campaigns.id, campaignId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
 export async function createCampaign(campaign: InsertCampaign) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.insert(campaigns).values(campaign);
+}
+
+export async function updateCampaign(campaignId: number, updates: Partial<InsertCampaign>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(campaigns).set(updates).where(eq(campaigns.id, campaignId));
 }
 
 // Subscriber queries

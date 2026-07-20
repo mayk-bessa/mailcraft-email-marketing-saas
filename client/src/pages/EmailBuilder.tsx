@@ -4,7 +4,7 @@ import DraggableEmailBlock from "@/components/DraggableEmailBlock";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Type, Image, Link2, Save, Eye } from "lucide-react";
+import { Type, Image, Link2, Save, Eye, Clock } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -23,8 +23,12 @@ export default function EmailBuilder() {
   const [blocks, setBlocks] = useState<EmailBlock[]>([]);
   const [preview, setPreview] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<string>("");
+  const [campaignId, setCampaignId] = useState<number | null>(null);
   
   const saveDraftMutation = trpc.campaigns.saveDraft.useMutation();
+  const scheduleMutation = trpc.campaigns.schedule.useMutation();
 
   const addBlock = (type: "text" | "image" | "button") => {
     const newBlock: EmailBlock = {
@@ -83,6 +87,40 @@ export default function EmailBuilder() {
     setDraggedIndex(null);
   };
 
+  const handleSchedule = () => {
+    if (!campaignId) {
+      toast.error("Salve a campanha primeiro");
+      return;
+    }
+    if (!scheduledDate) {
+      toast.error("Selecione uma data e hora");
+      return;
+    }
+
+    const scheduledDateTime = new Date(scheduledDate);
+    if (scheduledDateTime <= new Date()) {
+      toast.error("A data deve ser no futuro");
+      return;
+    }
+
+    scheduleMutation.mutate(
+      {
+        campaignId,
+        scheduledAt: scheduledDateTime,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Campanha agendada com sucesso!");
+          setShowSchedule(false);
+          setScheduledDate("");
+        },
+        onError: (error) => {
+          toast.error(error.message || "Erro ao agendar campanha");
+        },
+      }
+    );
+  };
+
   return (
     <MailCraftDashboardLayout currentPage="campaigns">
       <div className="space-y-6">
@@ -115,7 +153,9 @@ export default function EmailBuilder() {
                   subject: subject,
                   emailContent: blocks,
                 }, {
-                  onSuccess: () => {
+                  onSuccess: (result: any) => {
+                    const newCampaignId = result.insertId || result[0]?.insertId || campaignId;
+                    setCampaignId(newCampaignId);
                     toast.success("Rascunho salvo com sucesso!");
                   },
                   onError: () => {
@@ -128,8 +168,60 @@ export default function EmailBuilder() {
               <Save size={18} />
               {saveDraftMutation.isPending ? "Salvando..." : "Salvar Rascunho"}
             </Button>
+            {campaignId && (
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                onClick={() => setShowSchedule(!showSchedule)}
+              >
+                <Clock size={18} />
+                {showSchedule ? "Cancelar" : "Agendar"}
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Schedule Panel */}
+        {showSchedule && campaignId && (
+          <Card className="border border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-900">Agendar Campanha</CardTitle>
+              <CardDescription className="text-blue-700">
+                Escolha quando deseja enviar esta campanha
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground block mb-2">
+                  Data e Hora de Envio
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={handleSchedule}
+                  disabled={scheduleMutation.isPending}
+                >
+                  {scheduleMutation.isPending ? "Agendando..." : "Confirmar Agendamento"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowSchedule(false);
+                    setScheduledDate("");
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Panel - Configuration */}
