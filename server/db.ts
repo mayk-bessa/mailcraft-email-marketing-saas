@@ -135,10 +135,29 @@ export async function getSegmentsByUserId(userId: number) {
   return db.select().from(segments).where(eq(segments.userId, userId));
 }
 
+export async function getSegmentById(segmentId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(segments).where(eq(segments.id, segmentId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
 export async function createSegment(segment: InsertSegment) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.insert(segments).values(segment);
+}
+
+export async function updateSegment(segmentId: number, updates: Partial<InsertSegment>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(segments).set(updates).where(eq(segments.id, segmentId));
+}
+
+export async function deleteSegment(segmentId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(segments).where(eq(segments.id, segmentId));
 }
 
 // Email Template queries

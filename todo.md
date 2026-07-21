@@ -27,7 +27,7 @@
 ## Fase 5: Gerenciamento de Assinantes e Segmentos
 - [x] Criar página de segmentos de assinantes
 - [x] Implementar tabela com filtros, tags e gerenciamento de listas
-- [ ] Adicionar funcionalidade de criar/editar segmentos
+- [x] Adicionar funcionalidade de criar/editar segmentos
 - [ ] Implementar importação/exportação de assinantes
 
 ## Fase 6: Biblioteca de Templates

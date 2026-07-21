@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
-import { getCampaignsByUserId, createCampaign, getSubscribersByUserId, createSubscriber, getSegmentsByUserId, createSegment, getPrebuiltTemplates, createEmailTemplate, getCampaignById, updateCampaign } from "./db";
+import { getCampaignsByUserId, createCampaign, getSubscribersByUserId, createSubscriber, getSegmentsByUserId, createSegment, getPrebuiltTemplates, createEmailTemplate, getCampaignById, updateCampaign, getSegmentById, updateSegment, deleteSegment } from "./db";
 
 export const appRouter = router({
   system: systemRouter,
@@ -122,6 +122,35 @@ export const appRouter = router({
           filters: input.filters,
         })
       ),
+    update: protectedProcedure
+      .input(z.object({
+        segmentId: z.number(),
+        name: z.string().min(1).optional(),
+        description: z.string().optional(),
+        filters: z.any().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const segment = await getSegmentById(input.segmentId);
+        if (!segment || segment.userId !== ctx.user.id) {
+          throw new Error("Segment not found or unauthorized");
+        }
+        return updateSegment(input.segmentId, {
+          name: input.name,
+          description: input.description,
+          filters: input.filters,
+        });
+      }),
+    delete: protectedProcedure
+      .input(z.object({
+        segmentId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const segment = await getSegmentById(input.segmentId);
+        if (!segment || segment.userId !== ctx.user.id) {
+          throw new Error("Segment not found or unauthorized");
+        }
+        return deleteSegment(input.segmentId);
+      }),
   }),
 
   templates: router({

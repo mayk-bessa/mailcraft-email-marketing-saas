@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import MailCraftDashboardLayout from "@/components/MailCraftDashboardLayout";
+import SegmentModal from "@/components/SegmentModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,15 +8,90 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { Plus, Edit2, Trash2, Users } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Segments() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSegment, setEditingSegment] = useState<any>(null);
   
-  const { data: segments = [], isLoading } = trpc.segments.list.useQuery();
+  const { data: segments = [], isLoading, refetch } = trpc.segments.list.useQuery();
+  const createMutation = trpc.segments.create.useMutation();
+  const updateMutation = trpc.segments.update.useMutation();
+  const deleteMutation = trpc.segments.delete.useMutation();
 
   const filteredSegments = segments.filter((segment) =>
     segment.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleCreateNew = () => {
+    setEditingSegment(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (segment: any) => {
+    setEditingSegment(segment);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (segmentId: number) => {
+    if (confirm("Tem certeza que deseja deletar este segmento?")) {
+      deleteMutation.mutate(
+        { segmentId },
+        {
+          onSuccess: () => {
+            toast.success("Segmento deletado com sucesso!");
+            refetch();
+          },
+          onError: (error) => {
+            toast.error(error.message || "Erro ao deletar segmento");
+          },
+        }
+      );
+    }
+  };
+
+  const handleSubmit = (data: { name: string; description?: string; filters?: any }) => {
+    if (editingSegment) {
+      updateMutation.mutate(
+        {
+          segmentId: editingSegment.id,
+          name: data.name,
+          description: data.description,
+          filters: data.filters,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Segmento atualizado com sucesso!");
+            setIsModalOpen(false);
+            setEditingSegment(null);
+            refetch();
+          },
+          onError: (error) => {
+            toast.error(error.message || "Erro ao atualizar segmento");
+          },
+        }
+      );
+    } else {
+      createMutation.mutate(
+        {
+          name: data.name,
+          description: data.description,
+          filters: data.filters,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Segmento criado com sucesso!");
+            setIsModalOpen(false);
+            refetch();
+          },
+          onError: (error) => {
+            toast.error(error.message || "Erro ao criar segmento");
+          },
+        }
+      );
+    }
+  };
 
   return (
     <MailCraftDashboardLayout currentPage="segments">
@@ -28,7 +104,10 @@ export default function Segments() {
               Organize seus assinantes em segmentos para campanhas direcionadas
             </p>
           </div>
-          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2">
+          <Button 
+            className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
+            onClick={handleCreateNew}
+          >
             <Plus size={18} />
             Novo Segmento
           </Button>
@@ -53,7 +132,10 @@ export default function Segments() {
           <Card className="border border-border bg-white">
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">Nenhum segmento encontrado</p>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2">
+              <Button 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
+                onClick={handleCreateNew}
+              >
                 <Plus size={18} />
                 Criar Primeiro Segmento
               </Button>
@@ -93,6 +175,7 @@ export default function Segments() {
                       variant="outline"
                       size="sm"
                       className="flex-1 gap-2"
+                      onClick={() => handleEdit(segment)}
                     >
                       <Edit2 size={16} />
                       Editar
@@ -101,6 +184,8 @@ export default function Segments() {
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(segment.id)}
+                      disabled={deleteMutation.isPending}
                     >
                       <Trash2 size={16} />
                     </Button>
@@ -167,6 +252,7 @@ export default function Segments() {
                               variant="ghost"
                               size="sm"
                               className="text-accent hover:bg-accent/10"
+                              onClick={() => handleEdit(segment)}
                             >
                               <Edit2 size={16} />
                             </Button>
@@ -174,6 +260,8 @@ export default function Segments() {
                               variant="ghost"
                               size="sm"
                               className="text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDelete(segment.id)}
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash2 size={16} />
                             </Button>
@@ -188,6 +276,19 @@ export default function Segments() {
           </Card>
         )}
       </div>
+
+      {/* Segment Modal */}
+      <SegmentModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingSegment(null);
+        }}
+        onSubmit={handleSubmit}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+        initialData={editingSegment}
+        title={editingSegment ? "Editar Segmento" : "Novo Segmento"}
+      />
     </MailCraftDashboardLayout>
   );
 }
