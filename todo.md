@@ -32,9 +32,10 @@
 
 ## Fase 6: Biblioteca de Templates
 - [x] Criar seção de biblioteca de templates
-- [x] Implementar templates pré-prontos selecionáveis
-- [ ] Adicionar funcionalidade de criar template customizado
-- [ ] Integrar templates ao construtor de email
+- [x] Implementar templates pré-prontos com conteúdo real
+- [x] Integrar templates ao construtor de email via sessionStorage
+- [ ] Adicionar funcionalidade de criar/salvar templates customizados
+- [ ] Implementar visualização de templates
 
 ## Fase 7: Estilo Visual e Responsividade
 - [x] Aplicar paleta de cores (coral, branco, carvão) globalmente

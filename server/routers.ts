@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
-import { getCampaignsByUserId, createCampaign, getSubscribersByUserId, createSubscriber, getSegmentsByUserId, createSegment, getPrebuiltTemplates, createEmailTemplate, getCampaignById, updateCampaign, getSegmentById, updateSegment, deleteSegment } from "./db";
+import { getCampaignsByUserId, createCampaign, getSubscribersByUserId, createSubscriber, getSegmentsByUserId, createSegment, getPrebuiltTemplates, createEmailTemplate, getCampaignById, updateCampaign, getSegmentById, updateSegment, deleteSegment, getEmailTemplatesByUserId } from "./db";
 
 export const appRouter = router({
   system: systemRouter,
@@ -156,6 +156,9 @@ export const appRouter = router({
   templates: router({
     listPrebuilt: publicProcedure.query(() =>
       getPrebuiltTemplates()
+    ),
+    listCustom: protectedProcedure.query(({ ctx }) =>
+      getEmailTemplatesByUserId(ctx.user.id)
     ),
     create: protectedProcedure
       .input(z.object({

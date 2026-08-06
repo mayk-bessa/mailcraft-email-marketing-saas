@@ -161,12 +161,12 @@ export async function deleteSegment(segmentId: number) {
 }
 
 // Email Template queries
-export async function getEmailTemplatesByUserId(userId: number | null) {
+export async function getEmailTemplatesByUserId(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  // Get both prebuilt templates and user's custom templates
+  // Get user's custom templates (not prebuilt)
   return db.select().from(emailTemplates).where(
-    userId ? undefined : eq(emailTemplates.isPrebuilt, true)
+    eq(emailTemplates.userId, userId)
   );
 }
 
