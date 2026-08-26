@@ -48,3 +48,4 @@
 - [ ] Testar fluxos principais de usuário
 - [ ] Criar checkpoint final
 - [ ] Entregar projeto ao usuário
+- [ ] Sincronizar o projeto atual com um repositório GitHub e validar o push
